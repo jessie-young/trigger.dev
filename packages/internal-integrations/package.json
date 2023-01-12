@@ -6,21 +6,31 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "devDependencies": {
+    "@graphql-codegen/cli": "^2.16.4",
+    "@graphql-codegen/typescript": "^2.8.7",
+    "@graphql-codegen/typescript-generic-sdk": "^3.0.4",
+    "@graphql-codegen/typescript-operations": "^2.5.12",
     "@trigger.dev/tsconfig": "workspace:*",
     "@types/debug": "^4.1.7",
     "@types/node": "16",
     "@types/node-fetch": "2.6",
+    "dotenv": "^16.0.3",
     "internal-providers": "workspace:*",
+    "tiny-invariant": "^1.2.0",
     "typescript": "^4.9.4"
   },
-  "scripts": {},
+  "scripts": {
+    "codegen:shopify": "graphql-codegen --config ./src/shopify/codegen.json"
+  },
   "dependencies": {
+    "@dotdev/shopify-client": "^0.1.16",
     "@octokit/webhooks": "^10.4.0",
     "@shopify/admin-graphql-api-utilities": "^2.0.1",
     "@shopify/shopify-api": "^6.1.0",
     "@urql/core": "^3.1.1",
     "debug": "^4.3.4",
     "graphql": "^16.6.0",
+    "graphql-tag": "^2.12.6",
     "node-fetch": "2.6",
     "urql": "^3.0.3",
     "zod": "^3.20.2"

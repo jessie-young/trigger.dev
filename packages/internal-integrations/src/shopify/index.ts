@@ -19,6 +19,8 @@ import {
   searchProductVariantsQuery,
   updateProductQuery,
 } from "./queries";
+import { ShopifyAdmin } from "@dotdev/shopify-client";
+import { getSdk } from "./generated/graphql";
 
 const log = debug("trigger:integrations:shopify");
 class ShopifyRequestIntegration implements RequestIntegration {
@@ -37,49 +39,77 @@ class ShopifyRequestIntegration implements RequestIntegration {
       throw new Error("Missing store_name");
     }
 
-    const url = this.baseUrlFormat.replace(
-      "{shop}",
-      options.accessInfo.additionalFields.store_name
-    );
-    const client = createClient({
-      url,
-      fetchOptions: {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": options.accessInfo.api_key,
-        },
+    const shopify = new ShopifyAdmin({
+      getSdk,
+      shopName: options.accessInfo.additionalFields.store_name,
+      // or use an array to use key cycling
+      credentials: {
+        password: options.accessInfo.api_key,
       },
     });
 
-    switch (options.endpoint) {
-      case "product.create": {
-        return this.#createProduct(client, options.params);
-      }
-      case "product.update": {
-        return this.#updateProduct(client, options.params);
-      }
-      case "productVariants.search": {
-        return this.#searchProductVariants(client, options.params);
-      }
-      case "productVariant.create": {
-        return this.#createProductVariant(client, options.params);
-      }
-      case "productImages.append": {
-        return this.#appendProductImages(client, options.params);
-      }
-      case "collections.list": {
-        return this.#listCollections(client, options.params);
-      }
-      case "locations.list": {
-        return this.#listLocations(client, options.params);
-      }
-      case "collection.addProducts": {
-        return this.#addProductsToCollection(client, options.params);
-      }
-      default: {
-        throw new Error(`Unknown endpoint: ${options.endpoint}`);
-      }
-    }
+    const product = await shopify.client.productCreate({
+      input: {
+        // this will throw a type error, as Shopify
+        // expects title to be a string
+        title: "new-sdk",
+      },
+    });
+
+    const performedRequest = {
+      ok: true,
+      isRetryable: false,
+      response: {
+        output: product,
+        context: {},
+      },
+    };
+
+    return performedRequest;
+
+    // const url = this.baseUrlFormat.replace(
+    //   "{shop}",
+    //   options.accessInfo.additionalFields.store_name
+    // );
+    // const client = createClient({
+    //   url,
+    //   fetchOptions: {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       "X-Shopify-Access-Token": options.accessInfo.api_key,
+    //     },
+    //   },
+    // });
+
+    // switch (options.endpoint) {
+    //   case "product.create": {
+    //     return this.#createProduct(client, options.params);
+    //   }
+    //   case "product.update": {
+    //     return this.#updateProduct(client, options.params);
+    //   }
+    //   case "productVariants.search": {
+    //     return this.#searchProductVariants(client, options.params);
+    //   }
+    //   case "productVariant.create": {
+    //     return this.#createProductVariant(client, options.params);
+    //   }
+    //   case "productImages.append": {
+    //     return this.#appendProductImages(client, options.params);
+    //   }
+    //   case "collections.list": {
+    //     return this.#listCollections(client, options.params);
+    //   }
+    //   case "locations.list": {
+    //     return this.#listLocations(client, options.params);
+    //   }
+    //   case "collection.addProducts": {
+    //     return this.#addProductsToCollection(client, options.params);
+    //   }
+    //   default: {
+    //     throw new Error(`Unknown endpoint: ${options.endpoint}`);
+    //   }
+    // }
   }
 
   displayProperties(endpoint: string, params: any): DisplayProperties {

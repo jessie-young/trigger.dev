@@ -1,0 +1,20 @@
+{
+  "overwrite": true,
+  "schema": {
+    "https://dotdev-plus-sandbox.myshopify.com/admin/api/2021-07/graphql.json": {
+      "headers": {
+        "X-Shopify-Access-Token": "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"
+      }
+    }
+  },
+  "documents": "src/shopify/**/*.graphql",
+  "generates": {
+    "src/shopify/generated/graphql.ts": {
+      "plugins": [
+        "typescript",
+        "typescript-operations",
+        "typescript-generic-sdk"
+      ]
+    }
+  }
+}
