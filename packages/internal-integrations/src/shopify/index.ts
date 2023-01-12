@@ -39,6 +39,7 @@ class ShopifyRequestIntegration implements RequestIntegration {
       throw new Error("Missing store_name");
     }
 
+    //todo use the generator and client like this: https://www.npmjs.com/package/@dotdev/shopify-client
     const shopify = new ShopifyAdmin({
       getSdk,
       shopName: options.accessInfo.additionalFields.store_name,

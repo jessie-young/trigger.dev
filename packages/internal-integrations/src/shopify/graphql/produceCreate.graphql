@@ -1,7 +1,7 @@
 mutation productCreate($input: ProductInput!) {
   productCreate(input: $input) {
     product {
-      ...productFragment
+      ...productDetails
     }
     userErrors {
       field
