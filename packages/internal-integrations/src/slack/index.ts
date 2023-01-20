@@ -44,12 +44,28 @@ class SlackRequestIntegration implements RequestIntegration {
     path: "/chat.postMessage",
   });
 
+  #inviteUserToChannelEndpoint = new HttpEndpoint<
+    typeof slack.schemas.InviteUserToChannelResponseSchema,
+    typeof slack.schemas.InviteUserToChannelBodySchema
+  >({
+    response: slack.schemas.InviteUserToChannelResponseSchema,
+    method: "POST",
+    path: "/conversations.invite",
+  });
+
   constructor(private readonly baseUrl: string = "https://slack.com/api") {}
 
   perform(options: PerformRequestOptions): Promise<PerformedRequestResponse> {
     switch (options.endpoint) {
       case "chat.postMessage": {
         return this.#postMessage(
+          options.accessInfo,
+          options.params,
+          options.cache
+        );
+      }
+      case "conversations.invite": {
+        return this.#inviteUsersToChannel(
           options.accessInfo,
           options.params,
           options.cache
@@ -74,6 +90,13 @@ class SlackRequestIntegration implements RequestIntegration {
               value: params.text,
             },
           ],
+        };
+      }
+      case "conversations.invite": {
+        return {
+          title: `Invite users ${params.userIds.join(", ")} to ${
+            "channelName" in params ? params.channelName : params.channelId
+          }`,
         };
       }
       default: {
@@ -176,6 +199,108 @@ class SlackRequestIntegration implements RequestIntegration {
     };
 
     log("chat.postMessage performedRequest %O", performedRequest);
+
+    return performedRequest;
+  }
+
+  async #inviteUsersToChannel(
+    accessInfo: AccessInfo,
+    params: any,
+    cache?: CacheService
+  ): Promise<PerformedRequestResponse> {
+    const parsedParams =
+      slack.schemas.InviteUserToChannelOptionsSchema.parse(params);
+
+    log("conversations.invite %O", parsedParams);
+
+    const accessToken = getAccessToken(accessInfo);
+
+    const service = new HttpService({
+      accessToken,
+      baseUrl: this.baseUrl,
+    });
+
+    const channelId = await this.#findChannelId(service, parsedParams, cache);
+
+    log("found channelId %s", channelId);
+
+    if (!channelId) {
+      return {
+        ok: false,
+        isRetryable: false,
+        response: {
+          output: {
+            message: `channelId not found`,
+          },
+          context: {
+            statusCode: 404,
+            headers: {},
+          },
+        },
+      };
+    }
+
+    const response = await service.performRequest(
+      this.#inviteUserToChannelEndpoint,
+      {
+        users: parsedParams.userIds.join(","),
+        channel: channelId,
+      }
+    );
+
+    if (!response.success) {
+      log("conversations.invite failed %O", response);
+
+      console.error("conversations.invite failed %O", response);
+
+      return {
+        ok: false,
+        isRetryable: false,
+        response: {
+          output: {
+            ok: false,
+            message: `Couldn't invite users to channelId: ${channelId}`,
+            response,
+          },
+          context: {
+            statusCode: response.statusCode,
+            headers: response.headers,
+          },
+        },
+      };
+    }
+
+    const ok = response.data.ok;
+
+    if (!ok) {
+      log("conversations.invite failed %O", response.data);
+
+      return {
+        ok: false,
+        isRetryable: false,
+        response: {
+          output: response.data,
+          context: {
+            statusCode: response.statusCode,
+            headers: response.headers,
+          },
+        },
+      };
+    }
+
+    const performedRequest = {
+      ok,
+      isRetryable: this.#isRetryable(response.statusCode),
+      response: {
+        output: response.data,
+        context: {
+          statusCode: response.statusCode,
+          headers: response.headers,
+        },
+      },
+    };
+
+    log("conversations.invite performedRequest %O", performedRequest);
 
     return performedRequest;
   }

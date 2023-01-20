@@ -37,3 +37,25 @@ new Trigger({
   },
 }).listen();
 
+new Trigger({
+  id: "invite-to-channel",
+  name: "Invite user to channel",
+  apiKey: "trigger_dev_zC25mKNn6c0q",
+  endpoint: "ws://localhost:8889/ws",
+  logLevel: "debug",
+  on: customEvent({
+    name: "channel.invite",
+    schema: z.object({
+      channel: z.string(),
+      userIds: z.array(z.string()),
+    }),
+  }),
+  run: async (event, ctx) => {
+    const response = await slack.inviteUsersToChannel("invite-users", {
+      channelName: event.channel,
+      userIds: event.userIds,
+    });
+
+    return response;
+  },
+}).listen();

@@ -31,3 +31,35 @@ export async function postMessage(
 
   return output;
 }
+
+export type InviteUserToChannelOptions = z.infer<
+  typeof slack.schemas.InviteUserToChannelOptionsSchema
+>;
+
+export type InviteUserToChannelResponse = z.infer<
+  typeof slack.schemas.InviteUserToChannelSuccessResponseSchema
+>;
+
+export async function inviteUsersToChannel(
+  key: string,
+  options: InviteUserToChannelOptions
+): Promise<InviteUserToChannelResponse> {
+  const run = getTriggerRun();
+
+  if (!run) {
+    throw new Error(
+      "Cannot call inviteUsersToChannel outside of a trigger run"
+    );
+  }
+
+  const output = await run.performRequest(key, {
+    service: "slack",
+    endpoint: "conversations.invite",
+    params: options,
+    response: {
+      schema: slack.schemas.InviteUserToChannelSuccessResponseSchema,
+    },
+  });
+
+  return output;
+}
