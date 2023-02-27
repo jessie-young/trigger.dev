@@ -25,6 +25,7 @@ export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$(brew --prefix)/include"
 export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
 export PULSAR_CPP_DIR=/opt/homebrew/Cellar/libpulsar/3.1.0
 ```
+Note: replace 3.1.0 in the `PULSAR_CPP_DIR` with the version of libpulsar that you have installed.
 
 9. Run `pnpm install` in the same terminal window.
 
